@@ -14,6 +14,9 @@ if ( $status eq "" ) {
 my $branch           = ""; # branch name
 my $aheadBehind      = ""; # `ahead` or `behind` remote tracking branch
 my $aheadBehindCount = 0;  # commits ahead / behind remote tracking branch
+my $remote           = ""; # remote tracking branch name
+my $remoteTracking   = ""; # `ahead` or `behind` the remote
+my $remoteCount      = 0;  # commits ahead / behind
 
 # staged
 my $deletedStaged  = 0; # deleted
@@ -35,13 +38,20 @@ foreach ( @arr ) {
 	if( $_ =~ m/^##/ ) {
 		$_ =~ s/^##\s//g;
 
-		if ( $_ =~ /\[(\w+)\s(\d+)/ ) {
+		if ( $_ =~ /\[(\w+)\s(\d+)(,\s(\w+)\s(\d+))?/ ) {
 			$aheadBehind      = $1;
 			$aheadBehindCount = $2;
+
+			if ( $4 && $5 ) {
+				$remoteTracking = $4;
+				$remoteCount    = $5;
+			}
 		}
 
-		$_ =~ /(\w+)/;
+		$_ =~ /(\w+)(\.{3}([\w\/]+))?/;
 		$branch = $1;
+
+		if ( $3 ) { $remote = $3; }
 	}
 
 	# unstaged new files
@@ -92,6 +102,14 @@ use Term::ANSIColor qw(:constants);
 		print BOLD RED "$branch-$aheadBehindCount";
 	} else {
 		print BOLD CYAN "$branch";
+	}
+
+	if ( $remoteTracking eq "ahead" ) {
+		print WHITE " ~^~ ";
+		print BOLD BLUE "$remote+$remoteCount";
+	} elsif ( $remoteTracking eq "behind" ) {
+		print WHITE " ~^~ ";
+		print BOLD RED "$remote-$remoteCount";
 	}
 
 	if ( $staged || $unstaged ) {
